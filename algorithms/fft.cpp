@@ -1,0 +1,197 @@
+#include"bits/stdc++.h"
+
+using namespace std;
+#define ll long long
+
+
+template <long long MOD> struct ModInt {
+public:
+    ModInt() : value(0) {}
+
+    ModInt(long long value) : value(value) {
+        assert(0 <= value && value < MOD);
+    }
+
+    long long get() {
+        return this->value;
+    }
+
+    ModInt<MOD> operator+(ModInt<MOD> other) {
+        return ModInt<MOD>((this->value + other.value) % MOD);
+    }
+
+    ModInt<MOD> operator-() {
+        if (this->value == 0) return ModInt<MOD>(0);
+        return ModInt<MOD>(MOD - this->value);
+    }
+
+    ModInt<MOD> operator-(ModInt<MOD> other) {
+        return *this + (-other);
+    }
+
+    ModInt<MOD> operator*(ModInt<MOD> other) {
+        return ModInt<MOD>((this->value * other.value) % MOD);
+    }
+
+    ModInt<MOD> operator^(long long other) {
+        if (other == 0) return ModInt<MOD>(1);
+        if (other == 1) return ModInt<MOD>(this->value);
+        auto ret = (*this * *this) ^ (other / 2);
+        if (other % 2 == 0) return ret;
+        return ret * *this;
+    }
+
+    ModInt<MOD> operator/(ModInt<MOD> other) {
+        return *this * (other ^ (MOD - 2));
+    }
+
+    friend ostream& operator<<(ostream& out, ModInt<MOD> x) {
+        return out << x.value;
+    }
+
+    friend istream& operator>>(istream& in, ModInt<MOD>& x) {
+        return in >> x.value;
+    }
+private:
+    long long value;
+};
+
+template <int N, long long MOD>
+struct Combi {
+public:
+    Combi() {
+        fact_[0] = ModInt<MOD>(1);
+        for (int i = 1; i <= N; i++) {
+            fact_[i] = fact_[i-1] * ModInt<MOD>(i);
+        }
+    }
+
+    ModInt<MOD> fact(int n) {
+        return this->fact_[n];
+    }
+
+    ModInt<MOD> over(int n, int k) {
+        return this->fact(n) / (this->fact(k) * this->fact(n-k));
+    }
+private:
+    ModInt<MOD> fact_[N+1];
+};
+
+template <typename T1, typename T2>
+std::ostream& operator<< (std::ostream& out, const pair<T1, T2> p) {
+    out << "(" << p.first << "," << p.second << ")";
+    return out;
+}
+
+template <typename T>
+std::ostream& operator<< (std::ostream& out, const vector<T>& v) {
+    out << "[ ";
+    for (auto elem : v) {
+        out << elem << " ";
+    }
+    out << "]";
+    return out;
+}
+
+#define fft_int ModInt<998244353>
+fft_int base_root = fft_int(3) ^ 119;
+
+fft_int mth_root(int m) {
+    assert(__builtin_popcount(m) == 1);
+    return base_root ^ ((1 << 23) / m);
+}
+
+vector<fft_int> fft(vector<fft_int> arr) {
+    if (arr.size() == 1) return arr;
+
+    vector<fft_int> evens;
+    vector<fft_int> odds;
+    for (int i = 0; i < arr.size(); i++) {
+        if (i % 2 == 0) {
+            evens.push_back(arr[i]);
+        } else {
+            odds.push_back(arr[i]);
+        }
+    }
+
+    auto evens_fft = fft(evens);
+    auto odds_fft = fft(odds);
+
+    auto root = mth_root(arr.size());
+
+    vector<fft_int> out;
+
+    for (int i = 0; i < arr.size(); i++) {
+        if (i * 2 < arr.size()) {
+            out.push_back(evens_fft[i] + odds_fft[i] * (root ^ i));
+        } else {
+            int j = i - arr.size() / 2;
+            out.push_back(evens_fft[j] - odds_fft[j] * (root ^ j));
+        }
+    }
+
+    return out;
+}
+
+vector<fft_int> sft(vector<fft_int> arr) {
+    auto root = mth_root(arr.size());
+    vector<fft_int> out;
+    for (int k = 0; k < arr.size(); k++) {
+        fft_int sum(0);
+        for (int i = 0; i < arr.size(); i++) {
+            sum = sum + arr[i] * (root ^ (i * k));
+        }
+
+        out.push_back(sum);
+    }
+
+    return out;
+}
+
+vector<fft_int> expand(vector<fft_int> arr, int size) {
+    while (arr.size() < size) arr.emplace_back();
+    return arr;
+}
+
+vector<fft_int> conv(vector<fft_int> a, vector<fft_int> b) {
+    auto total_size = a.size() + b.size();
+    int desired_size = 1;
+    while (desired_size < total_size) desired_size <<= 1;
+
+    auto a_ = expand(a, desired_size);
+    auto b_ = expand(b, desired_size);
+
+    auto a_fft = fft(a_);
+    auto b_fft = fft(b_);
+
+    vector<fft_int> c_fft;
+    for (int i = 0; i < desired_size; i++) {
+        c_fft.push_back(a_fft[i] * b_fft[i]);
+    }
+    auto c = fft(c_fft);
+    for (int i = 0; i < desired_size; i++) {
+        c[i] = c[i] / fft_int(desired_size);
+    }
+    reverse(c.begin()+1, c.end());
+    while (c.size() >= total_size) c.pop_back();
+
+    return c;
+}
+
+void sol() {
+}
+
+template <typename T>
+vector<T> read_line(int n) {
+    vector<T> ret;
+    for (int i = 0; i < n; i++) {
+        T x;
+        cin >> x;
+        ret.push_back(x);
+    }
+    return ret;
+}
+
+
+int main() {
+}
